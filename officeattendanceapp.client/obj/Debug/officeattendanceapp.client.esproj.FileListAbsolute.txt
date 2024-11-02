@@ -1,0 +1,1 @@
+C:\PROGRAMOZÁS\Otthoni progik\OfficeAttendanceApp\officeattendanceapp.client\obj\Debug\officeattendanceapp.client.esproj.CoreCompileInputs.cache

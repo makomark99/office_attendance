@@ -1,0 +1,40 @@
+function updateCalendar() {
+        let date = props.selectedDate;
+        let year = date.getFullYear();
+        let month = date.getMonth();
+
+        let daysInMonth = new Date(year, month + 1, 0).getDate(); // Number of days in the month
+        let startingDay = new Date(year, month, 1).getDay(); // Starting day of the month (0: Sunday, 1: Monday, ..., 6: Saturday)
+
+        // Adjust startingDay to start from Monday (0: Monday, 1: Tuesday, ..., 6: Sunday)
+        startingDay = startingDay === 0 ? 6 : startingDay - 1;
+
+        let dayCount = 1;
+        let newCalendar = [];
+
+        // Loop through weeks
+        for (let i = 0; i < 6; i++) {
+            let week = [];
+
+            // Loop through days in week
+            for (let j = 0; j < 7; j++) {
+                if (i === 0 && j < startingDay) {
+                    // Empty cells before the starting day
+                    week.push('');
+                } else if (dayCount <= daysInMonth) {
+                    // Fill in the days of the month
+                    week.push(dayCount);
+                    dayCount++;
+                } else {
+                    // Fill in empty cells after the month ends
+                    week.push('');
+                }
+            }
+
+            // Push the week to the calendar
+            newCalendar.push(week);
+        }
+
+        // Update the calendar
+        calendar.value = newCalendar;
+    }

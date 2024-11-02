@@ -1,0 +1,138 @@
+<template>
+    <div>
+        <h2>{{ yearMonth }}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th v-for="day in weekDays" :key="day">
+                        {{ day }}
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="(week, index) in calendar" :key="index">
+                    <td v-for="(day, index) in week" :key="index">
+                        <!-- Conditionally render the day component -->
+                        <CalendarDay :day="day"
+                                     :event=events[day-1]
+                                     :dutyEvent=dutyEvents[day-1]
+                                     :isWeekend="isWeekend(index)"
+                                     :selectedDate="getSelectedDate(day)"
+                                     :isCurrentMonth="day > 0" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</template>
+
+<script setup>
+    import { ref, watchEffect, defineProps, computed } from 'vue';
+    import CalendarDay from './CalendarDay.vue';
+
+    const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const events = ['HO', 'HO', 'HO', '', '',
+        'SO', 'HO', '', '', 'HO', 'HO', '',
+        'D1', 'D1', 'D1', 'D1', 'SO', 'OO',
+        'OO', '', 'HO', 'HO', '', 'HO', '',
+        '', 'T4', 'D2', '', 'HO', 'HO'];
+    const dutyEvents = ['', '', '', 'I', 'I', '', '',
+        '', 'RC', 'S', 'S', 'S', '', '',
+        '', '', '', '', '', 'S', 'S',
+        'S', 'S', '', '', '', '', '', '', '', '', ''];
+
+    const props = defineProps(
+        {
+            selectedDate: {
+                type: Date
+            }
+        }
+    );
+
+    const yearMonth = computed(() => {
+        return props.selectedDate.toLocaleString('en-US', { year: 'numeric', month: 'long' });
+    })
+
+    const getSelectedDate = (day) => {
+        // Clone the selectedDate to avoid mutating the original date
+        let currentDate = new Date(props.selectedDate);
+
+        // Adjust the day value
+        currentDate.setDate(currentDate.getDate() + (day - 1));
+
+        return currentDate;
+    };
+
+    // Data
+    let calendar = ref([]);
+
+    // Watch for changes in selectedDate prop
+    watchEffect(() => {
+        updateCalendar();
+    });
+
+    function isWeekend(dayIndex) {
+        return dayIndex === 5 || dayIndex === 6;
+    }
+
+    // Method to update the calendar based on the selected date
+
+    function updateCalendar() {
+        let date = props.selectedDate;
+        let year = date.getFullYear();
+        let month = date.getMonth();
+
+        let daysInMonth = new Date(year, month + 1, 0).getDate(); // Number of days in the month
+        let startingDay = new Date(year, month, 1).getDay(); // Starting day of the month (0: Sunday, 1: Monday, ..., 6: Saturday)
+
+        // Adjust startingDay to start from Monday (0: Monday, 1: Tuesday, ..., 6: Sunday)
+        startingDay = startingDay === 0 ? 6 : startingDay - 1;
+
+        // Get the number of days in the previous month
+        let daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        let dayCount = 1;
+        let newCalendar = [];
+
+        // Loop through weeks
+        for (let i = 0; i < 6; i++) {
+            let week = [];
+
+            // Loop through days in week
+            for (let j = 0; j < 7; j++) {
+                let dayInfo = {
+                    day: null,
+                    isCurrentMonth: false
+                };
+
+                if (i === 0 && j < startingDay) {
+                    // Fill in the days from the previous month
+                    dayInfo.day = daysInPrevMonth - startingDay + j + 1;
+                } else if (dayCount <= daysInMonth) {
+                    // Fill in the days of the month
+                    dayInfo.day = dayCount;
+                    dayInfo.isCurrentMonth = true;
+                    dayCount++;
+                } else {
+                    // Fill in the days from the next month
+                    dayInfo.day = dayCount - daysInMonth;
+                    dayInfo.isCurrentMonth = false;
+                    dayCount++;
+                }
+
+                week.push(dayInfo);
+            }
+
+            // Push the week to the calendar
+            newCalendar.push(week);
+        }
+
+        // Update the calendar
+        calendar.value = newCalendar;
+    }
+</script>
+
+<style>
+    /* Add any necessary styles for the calendar table */
+</style>

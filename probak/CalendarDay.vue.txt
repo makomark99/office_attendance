@@ -1,0 +1,231 @@
+<template>
+    <Button class="day"
+            :severity="buttonSeverity"
+            raised
+            @click="openDialog = true"
+            :disabled="!day.isCurrentMonth">
+        <!-- Disable the button if not in current month -->
+        <div class="number">{{ day.day }}</div>
+        <div class="events">
+            <div class="badge-container">
+                <div class="badges">
+                    <Badge class="first-badge"
+                           v-if="event !== ''"
+                           :value="event"
+                           :style="{ backgroundColor: eventBadgeColor, color: 'black' }"></Badge>
+                </div>
+                <div class="badges">
+                    <Badge class="second-badge"
+                           v-if="dutyEvent !== ''"
+                           :value="dutyEvent"
+                           :style="{ backgroundColor: dutyEventBadgeColor, color: 'black' }"></Badge>
+                </div>
+            </div>
+        </div>
+    </Button>
+
+    <Dialog v-model:visible="openDialog"
+            modal
+            :style="{ width: '30rem', height: '36rem' }">
+        <template #header>
+            <div>{{ clickedDate }}</div>
+        </template>
+        <span class="block mb-5">Update your office attendance information.</span>
+
+        <div class="card flex justify-content-center">
+            <div class="grid-container">
+                <div class="grid-item">
+                    <div class="inner-grid">
+                        <div class="inner-grid-item">
+                            <Listbox v-model="selectedEventOption" :options="eventOptions" optionLabel="name" class="w-full md:w-12rem" />
+                        </div>
+                        <div class="inner-grid-item">
+                            <Listbox v-model="selectedEventOption" :options="eventOptions2" optionLabel="name" class="w-full md:w-12rem" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-item">
+                    <hr class="text-secondary-color" />
+                    <Listbox v-model="selected3rdLvlOptions" :options="stateOptionsFor3rdLvl" optionLabel="name" class="w-full md:w-12rem" />
+                </div>
+            </div>
+        </div>
+
+        <div class="flex mt button-container">
+            <Button type="button" label="Cancel" @click="openDialog = false" class="p-button-secondary first-button"></Button>
+            <Button type="button" label="Save" @click="openDialog = false"></Button>
+        </div>
+    </Dialog>
+
+
+</template>
+
+<script setup>
+
+    //import Button from 'primevue/button';
+    import { ref, defineProps, computed } from 'vue';
+    import { useEventOptions } from '@/composables/useEventOptions';
+    import moment from 'moment';
+    import Button from 'primevue/button';
+    import Dialog from 'primevue/dialog';
+    import Listbox from 'primevue/listbox';
+    import Badge from 'primevue/badge';
+
+    const {
+        mergedOptions,
+        eventOptions,
+        eventOptions2,
+        stateOptionsFor3rdLvl
+    } = useEventOptions();
+
+    const props = defineProps({
+        day: Object, // Day number
+        event: String, // Events or activities
+        dutyEvent: String,
+        selectedDate: Date,
+        isWeekend: Boolean,
+        isCurrentMonth: Boolean
+    });
+
+    const buttonSeverity = computed(() => {
+        if (props.isWeekend && !props.disabled) {
+            return 'danger'; // Weekend and not disabled
+        } else if (props.isCurrentMonth) {
+            return 'secondary'; // Disabled
+        } else {
+            return 'contrast'; // Default
+        }
+    });
+
+    const dateToDisplay = new Date(props.selectedDate)
+
+    const clickedDate = computed(() => {
+        return moment(dateToDisplay).format("YYYY. MMMM DD. (dddd)");
+    });
+
+    const eventBadgeColor = computed(() => {
+        const option = mergedOptions.find(option => option.code === props.event);
+        return option ? option.color : null;
+    });
+    const dutyEventBadgeColor = computed(() => {
+        const option = mergedOptions.find(option => option.code === props.dutyEvent);
+        return option ? option.color : null;
+    });
+
+    const openDialog = ref(false);
+
+
+    const isOpen = ref(props.isOpen);
+    const selectedDate = ref(props.selectedDate);
+
+    const selectedEventOption = ref({ name: 'Office day', code: '', color: '#ffffff' });
+    const selected3rdLvlOptions = ref({ name: '', code: '', color: '' })
+
+
+    const saveChanges = () => {
+        // Handle saving changes
+        closeDialog();
+    };
+
+
+</script>
+
+<style scoped>
+    .day:hover {
+        background-color: black !important;
+        color: white !important;
+    }
+
+    hr {
+        background-color: var(--primary-color);
+        height: 3px;
+        margin-right: 5px;
+        margin-left: 5px;
+    }
+
+    .second-badge {
+        margin-top: 10px;
+    }
+
+    .badges {
+        height: calc(50% - 5px);
+        margin: 1px 0;
+    }
+
+    .day {
+        width: 75px;
+        height: 75px;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin: 5px;
+        padding: 0;
+        position: relative;
+    }
+
+
+
+    .badge-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+
+
+    .minus-right {
+        margin-right: -2px;
+    }
+
+    .minus-left {
+        margin-left: -2px;
+    }
+
+    .first-button {
+        margin-right: 5px;
+    }
+
+    .number {
+        height: 60%;
+        padding-top: 8px;
+        font-size: 22px;
+        font-weight: bold;
+        
+    }
+
+    .events {
+        height: 40%;
+        padding: 5px;
+        font-size: 10px;
+        margin-bottom: 10px;
+    }
+
+    .mt {
+        margin-top: 3px;
+    }
+
+    .grid-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* Centers items horizontally */
+    }
+
+    .grid-item {
+        width: 100%;
+    }
+
+    .inner-grid {
+        display: flex;
+    }
+
+    .inner-grid-item {
+        flex: 1;
+    }
+
+    .button-container {
+        display: inline-block;
+    }
+</style>
